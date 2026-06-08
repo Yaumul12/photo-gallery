@@ -1,0 +1,81 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Photo Gallery</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Segoe UI',sans-serif;background:#0a0a1a;color:#fff;min-height:100vh;padding:20px}
+.ob{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;display:flex;justify-content:center;align-items:center}.ob.hide{display:none}
+.oc{background:#141428;border-radius:20px;padding:40px;max-width:500px;width:90%;text-align:center}
+.oc h2{color:#fab1a0;font-size:28px;margin-bottom:8px}.oc .sub{color:#888;font-size:14px}
+.stps{margin:25px 0;text-align:left;display:flex;flex-direction:column;gap:18px}
+.st{display:flex;gap:14px;align-items:flex-start}.st .n{width:32px;height:32px;border-radius:50%;background:#fab1a0;color:#000;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px}
+.st h4{font-size:14px;margin-bottom:2px}.st p{font-size:12px;color:#888;line-height:1.5}
+.oc button{padding:14px 40px;border:none;border-radius:10px;background:#fab1a0;color:#000;font-size:16px;font-weight:600;cursor:pointer}
+.oc .sk{color:#555;font-size:12px;cursor:pointer;margin-top:12px;display:inline-block}
+.app{display:none;max-width:900px;margin:0 auto}.app.show{display:block}
+h1{text-align:center;margin-bottom:5px}h1 span{background:linear-gradient(90deg,#fab1a0,#e17055);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sub2{text-align:center;color:#666;margin-bottom:20px;font-size:14px}
+.upload{text-align:center;margin-bottom:20px}
+.upload label{padding:12px 24px;background:#1a1a3e;border:2px dashed #333;border-radius:12px;cursor:pointer;font-size:14px;color:#888;display:inline-block;transition:.2s}
+.upload label:hover{border-color:#fab1a0;color:#fab1a0}
+.upload input{display:none}
+.filters{display:flex;justify-content:center;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.filters button{padding:8px 16px;border:1px solid #333;border-radius:20px;background:transparent;color:#888;cursor:pointer;font-size:12px}
+.filters button.active{background:#fab1a0;color:#000;border-color:#fab1a0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.photo{border-radius:12px;overflow:hidden;cursor:pointer;position:relative;aspect-ratio:1;background:#1a1a3e;transition:.3s}
+.photo:hover{transform:scale(1.02);box-shadow:0 8px 25px rgba(0,0,0,0.3)}
+.photo img{width:100%;height:100%;object-fit:cover}
+.photo .overlay{position:absolute;bottom:0;left:0;right:0;padding:10px;background:linear-gradient(transparent,rgba(0,0,0,0.7));opacity:0;transition:.2s}
+.photo:hover .overlay{opacity:1}
+.photo .overlay .name{font-size:12px;font-weight:600}
+.photo .overlay .cat{font-size:10px;color:#fab1a0}
+.photo .del{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer;font-size:14px;border:none}
+.photo:hover .del{display:flex}
+.lightbox{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:2000;display:none;justify-content:center;align-items:center}
+.lightbox.show{display:flex}
+.lightbox img{max-width:90%;max-height:90%;border-radius:12px}
+.lightbox .close{position:absolute;top:20px;right:20px;font-size:30px;cursor:pointer;color:#fff}
+.lightbox .nav{position:absolute;top:50%;font-size:40px;cursor:pointer;color:#fff;transform:translateY(-50%);padding:20px}
+.lightbox .nav.prev{left:10px}.lightbox .nav.next{right:10px}
+.empty{text-align:center;color:#555;padding:40px;font-size:14px}
+</style></head><body>
+<div class="ob" id="ob"><div class="oc">
+<h2>Photo Gallery</h2><p class="sub">Upload and organize your photos</p>
+<div class="stps">
+<div class="st"><div class="n">1</div><div><h4>Upload Photos</h4><p>Click the upload area to select images from your device. Multiple files supported.</p></div></div>
+<div class="st"><div class="n">2</div><div><h4>Browse & Filter</h4><p>View photos in a grid. Use category buttons to filter by type.</p></div></div>
+<div class="st"><div class="n">3</div><div><h4>View Fullscreen</h4><p>Click any photo to open it in a fullscreen lightbox. Use arrows to navigate.</p></div></div>
+</div>
+<button onclick="start()">Open Gallery</button>
+<div class="sk" onclick="start()">Skip</div>
+</div></div>
+<div class="app" id="app">
+<h1><span>Photo Gallery</span></h1><p class="sub2">Your personal photo collection</p>
+<div class="upload"><label>\ud83d\udcf7 Upload Photos<input type="file" id="fileInput" accept="image/*" multiple onchange="upload(event)"></label></div>
+<div class="filters"><button class="active" onclick="filterCat('all',this)">All</button><button onclick="filterCat('nature',this)">Nature</button><button onclick="filterCat('people',this)">People</button><button onclick="filterCat('food',this)">Food</button><button onclick="filterCat('other',this)">Other</button></div>
+<div class="grid" id="grid"></div></div>
+<div class="lightbox" id="lightbox"><span class="close" onclick="closeLB()">&times;</span><span class="nav prev" onclick="navLB(-1)">&#10094;</span><img id="lbImg"><span class="nav next" onclick="navLB(1)">&#10095;</span></div>
+<script>
+var photos=JSON.parse(localStorage.getItem('pg')||'[]');var activeCat='all';var lbIdx=0;
+function start(){document.getElementById('ob').classList.add('hide');document.getElementById('app').classList.add('show');localStorage.setItem('pg_seen','1');render()}
+if(localStorage.getItem('pg_seen')){document.getElementById('ob').classList.add('hide');document.getElementById('app').classList.add('show')}
+function upload(e){
+Array.from(e.target.files).forEach(function(f){
+var reader=new FileReader();reader.onload=function(ev){
+photos.unshift({src:ev.target.result,name:f.name,cat:'other',date:new Date().toLocaleDateString()});
+localStorage.setItem('pg',JSON.stringify(photos));render();
+};reader.readAsDataURL(f);
+});
+}
+function render(){
+var filtered=activeCat==='all'?photos:photos.filter(function(p){return p.cat===activeCat});
+document.getElementById('grid').innerHTML=filtered.length?filtered.map(function(p,idx){
+var ri=photos.indexOf(p);
+return '<div class="photo" onclick="openLB('+ri+')"><img src="'+p.src+'" alt="'+p.name+'"><div class="overlay"><div class="name">'+p.name+'</div><div class="cat">'+p.cat+'</div></div><button class="del" onclick="event.stopPropagation();del('+ri+')">&times;</button></div>';
+}).join(''):'<div class="empty">No photos yet. Upload some above!</div>';
+}
+function filterCat(c,btn){activeCat=c;document.querySelectorAll('.filters button').forEach(function(b){b.classList.remove('active')});btn.classList.add('active');render()}
+function del(i){photos.splice(i,1);localStorage.setItem('pg',JSON.stringify(photos));render()}
+function openLB(i){lbIdx=i;document.getElementById('lbImg').src=photos[i].src;document.getElementById('lightbox').classList.add('show')}
+function closeLB(){document.getElementById('lightbox').classList.remove('show')}
+function navLB(d){lbIdx=(lbIdx+d+photos.length)%photos.length;document.getElementById('lbImg').src=photos[lbIdx].src}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLB();if(e.key==='ArrowLeft')navLB(-1);if(e.key==='ArrowRight')navLB(1)});
+render();
+</script></body></html>
